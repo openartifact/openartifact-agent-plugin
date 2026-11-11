@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "openartifact": {
+      "url": "${OA_URL}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${API_TOKEN}"
+      }
+    }
+  }
+}

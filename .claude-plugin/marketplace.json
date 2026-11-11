@@ -1,0 +1,12 @@
+{
+  "name": "openartifact-community",
+  "description": "Community plugins for OpenArtifact",
+  "owner": { "name": "orcamedia" },
+  "plugins": [
+    {
+      "name": "openartifact",
+      "source": "./",
+      "description": "Configure package managers for your OpenArtifact registry, check dependencies against its decisions and explain install failures. Read-only."
+    }
+  ]
+}

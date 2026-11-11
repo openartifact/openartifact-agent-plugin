@@ -1,0 +1,22 @@
+{
+  "name": "openartifact",
+  "displayName": "OpenArtifact",
+  "version": "0.1.0",
+  "description": "Use your OpenArtifact registry from the agent: configure package managers for it, check dependencies against its curation, minimum-age, quarantine and license decisions, and explain install failures. Read-only. Community plugin, not an official OpenArtifact project.",
+  "author": { "name": "orcamedia" },
+  "license": "AGPL-3.0-or-later",
+  "keywords": ["openartifact", "artifact-registry", "supply-chain", "composer", "npm", "pypi", "mcp"],
+  "userConfig": {
+    "server_url": {
+      "type": "string",
+      "title": "OpenArtifact URL",
+      "description": "Base URL of your OpenArtifact server, without a trailing slash, e.g. https://artifacts.example.com"
+    },
+    "api_token": {
+      "type": "string",
+      "title": "API token",
+      "description": "An OpenArtifact API token (oa_pat_...). A read-only token is enough and recommended.",
+      "sensitive": true
+    }
+  }
+}
