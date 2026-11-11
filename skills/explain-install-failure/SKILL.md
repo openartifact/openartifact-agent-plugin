@@ -10,7 +10,7 @@ description: Explain why a package install from OpenArtifact failed (403, 404, "
    - `401` on every request: no token or an invalid one. Point the user at their credentials (see the `configure-project` skill), never at the token value itself.
    - `403` on every package: the token lacks `read` on that repository. A registry administrator has to grant it.
    - A failure for one package or version: continue below.
-3. **Ask the registry why.** For a version, `check_availability(repository, package, version)`; when the version is unknown (a range did not resolve), `list_held_back_versions(repository, package)` and `list_proxy_versions(repository, package)`. A group repository has no verdict of its own: check its members instead (the proxy and hosted repositories of the same format, see the `check-dependency` skill).
+3. **Ask the registry why.** For a version, `check_availability(repository, package, version)`; when the version is unknown (a range did not resolve), `list_held_back_versions(repository, package)` and `list_proxy_versions(repository, package)`. A group repository has no verdict of its own: check its members instead, in the order `get_repository` lists them under `members` (see the `check-dependency` skill for servers that do not list them).
 4. **Explain each reason** in plain words:
    - `min_age`: the version is newer than the repository allows; it unlocks at `until`. Suggest waiting or using the newest older version that is available.
    - `curation`: a rule blocks it (or an allowlist does not list it); quote `detail` and `rule_id` so an administrator can find it.
