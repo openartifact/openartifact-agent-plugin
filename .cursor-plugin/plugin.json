@@ -1,10 +1,17 @@
 {
   "name": "openartifact",
-  "description": "Use your OpenArtifact registry from the agent: configure package managers for it, check dependencies against its curation, minimum-age, quarantine and license decisions, and explain install failures. Read-only. Community plugin, not an official OpenArtifact project.",
+  "description": "Use your OpenArtifact registry from the agent: configure package managers for it, check dependencies against its curation, minimum-age, quarantine and license decisions, and explain install failures. Read-only.",
   "version": "0.1.0",
-  "author": { "name": "orcamedia" },
+  "author": {
+    "name": "The OpenArtifact Authors"
+  },
   "license": "AGPL-3.0-or-later",
-  "keywords": ["openartifact", "artifact-registry", "supply-chain", "mcp"],
+  "keywords": [
+    "openartifact",
+    "artifact-registry",
+    "supply-chain",
+    "mcp"
+  ],
   "variables": {
     "type": "object",
     "properties": {
@@ -19,6 +26,11 @@
         "description": "An OpenArtifact API token; a read-only token is recommended"
       }
     },
-    "required": ["OA_URL", "API_TOKEN"]
-  }
+    "required": [
+      "OA_URL",
+      "API_TOKEN"
+    ]
+  },
+  "homepage": "https://github.com/openartifact/openartifact-agent-plugin",
+  "repository": "https://github.com/openartifact/openartifact-agent-plugin"
 }

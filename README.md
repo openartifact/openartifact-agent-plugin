@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: The openartifact-agent-plugin contributors
+SPDX-FileCopyrightText: The OpenArtifact Authors
 
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
@@ -16,8 +16,6 @@ Use your [OpenArtifact](https://github.com/openartifact/openartifact) registry f
 
 The plugin is read-only: it only calls OpenArtifact's read tools, and the agent is told never to work around the registry (no public-registry fallback, no disabled config).
 
-This is a community plugin, not an official OpenArtifact project.
-
 ## Requirements
 
 - An OpenArtifact server with MCP enabled (`MCP_ENABLED=true`, and `BASE_URL` set to the address clients reach). See [MCP server](https://github.com/openartifact/openartifact/blob/main/docs/integrations/mcp.md).
@@ -26,11 +24,11 @@ This is a community plugin, not an official OpenArtifact project.
 ## Claude Code
 
 ```sh
-claude plugin marketplace add orcamedia/openartifact-agent-plugin
-claude plugin install openartifact@openartifact-community
+claude plugin marketplace add openartifact/openartifact-agent-plugin
+claude plugin install openartifact@openartifact
 ```
 
-Claude Code asks for the server URL and the token when the plugin is enabled; the token is kept in secure storage. To change them later: `claude plugin configure openartifact`.
+Claude Code asks for the server URL and the token when the plugin is enabled; the token is kept in secure storage. To change them later, run `/plugin configure openartifact@openartifact` inside Claude Code.
 
 ## Cursor
 
@@ -42,9 +40,9 @@ Install from a local checkout and set the options (`claude plugin configure` onl
 
 ```sh
 claude plugin marketplace add .
-claude plugin install openartifact@openartifact-community
+claude plugin install openartifact@openartifact
 echo '{"server_url":"https://artifacts.example.com","api_token":"oa_pat_..."}' \
-  | claude plugin configure openartifact@openartifact-community --values-stdin
+  | claude plugin configure openartifact@openartifact --values-stdin
 # without --values-stdin the command only lists the options; /plugin configure inside Claude Code also sets them
 claude mcp list                                               # plugin:openartifact:openartifact ... ✔ Connected
 ```

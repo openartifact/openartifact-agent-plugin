@@ -1,7 +1,9 @@
 {
-  "name": "openartifact-community",
-  "description": "Community plugins for OpenArtifact",
-  "owner": { "name": "orcamedia" },
+  "name": "openartifact",
+  "description": "OpenArtifact plugins for coding agents",
+  "owner": {
+    "name": "The OpenArtifact Authors"
+  },
   "plugins": [
     {
       "name": "openartifact",

@@ -4,5 +4,5 @@ version = 1
 # first) carry their licensing here.
 [[annotations]]
 path = [".claude-plugin/**", ".cursor-plugin/**", ".mcp.json", "mcp.json", "skills/**", ".gitignore"]
-SPDX-FileCopyrightText = "The openartifact-agent-plugin contributors"
+SPDX-FileCopyrightText = "The OpenArtifact Authors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
