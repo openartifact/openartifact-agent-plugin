@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: The OpenArtifact Authors
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# GitHub Actions are pinned by full commit SHA with a `# vX.Y.Z` comment so
+# Dependabot can bump them. GO_VERSION and ACTIONLINT_VERSION in ci.yml are
+# bumped by hand.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]

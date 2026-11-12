@@ -47,7 +47,7 @@ echo '{"server_url":"https://artifacts.example.com","api_token":"oa_pat_..."}' \
 claude mcp list                                               # plugin:openartifact:openartifact ... ✔ Connected
 ```
 
-Check the manifests with `claude plugin validate .`. To keep a test away from your own Claude Code setup, run these with `CLAUDE_CONFIG_DIR` pointing to an empty directory.
+Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with REUSE and workflow lint) and `claude plugin validate .`. To keep a test away from your own Claude Code setup, run these with `CLAUDE_CONFIG_DIR` pointing to an empty directory.
 
 ## Privacy
 
