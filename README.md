@@ -41,10 +41,16 @@ Install from a local checkout and set the options (`claude plugin configure` onl
 ```sh
 claude plugin marketplace add .
 claude plugin install openartifact@openartifact
-echo '{"server_url":"https://artifacts.example.com","api_token":"oa_pat_..."}' \
+claude mcp list            # after the options are set: plugin:openartifact:openartifact ... ✔ Connected
+```
+
+Set the options with `/plugin configure openartifact@openartifact` inside Claude Code: it prompts for them and keeps the token in secure storage. `claude plugin configure openartifact@openartifact` on its own only lists them.
+
+For automation, pipe the options in from variables your secret store fills, so the token never appears on a command line or in shell history:
+
+```sh
+jq -n --arg url "$OA_URL" --arg token "$OA_TOKEN" '{server_url: $url, api_token: $token}' \
   | claude plugin configure openartifact@openartifact --values-stdin
-# without --values-stdin the command only lists the options; /plugin configure inside Claude Code also sets them
-claude mcp list                                               # plugin:openartifact:openartifact ... ✔ Connected
 ```
 
 Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with REUSE and workflow lint) and `claude plugin validate .`. To keep a test away from your own Claude Code setup, run these with `CLAUDE_CONFIG_DIR` pointing to an empty directory.
