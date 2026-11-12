@@ -9,6 +9,7 @@ and version, one MCP server, every skill with a name and a description).
 Standard library only, so CI needs no extra tooling. Exits 1 on any problem."""
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -79,11 +80,23 @@ def check_manifests() -> None:
         if not isinstance(defined.get(name), dict) or defined[name].get("type") != "string":
             fail(f".cursor-plugin/plugin.json: variables.properties.{name} must be defined with type string")
 
+    check_release_tag(str(claude.get("version", "")))
+
     if not market.get("owner", {}).get("name"):
         fail(".claude-plugin/marketplace.json: owner.name is required")
     entries = [p for p in market.get("plugins", []) if isinstance(p, dict)]
     if [p.get("name") for p in entries] != [claude.get("name")] or entries[0].get("source") != "./":
         fail(".claude-plugin/marketplace.json: must list this plugin once, with source ./")
+
+
+def check_release_tag(version: str) -> None:
+    """On a tag build, the tag must be v<version of the manifests>, so a release
+    is never cut from a commit whose manifests say something else."""
+    if os.environ.get("GITHUB_REF_TYPE") != "tag":
+        return
+    tag = os.environ.get("GITHUB_REF_NAME", "")
+    if tag != f"v{version}":
+        fail(f"tag {tag!r} does not match the manifest version {version!r}: expected v{version}")
 
 
 def check_mcp(rel: str, url: str, auth: str, need_type: bool) -> None:
