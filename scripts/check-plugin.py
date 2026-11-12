@@ -15,6 +15,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$")
+CURSOR_VARIABLES = {"OA_URL", "API_TOKEN"}
 SERVER = "openartifact"
 
 problems: list[str] = []
@@ -53,6 +55,8 @@ def check_manifests() -> None:
             fail(f"{rel}: license must be AGPL-3.0-or-later")
         if not m.get("description"):
             fail(f"{rel}: description is empty")
+        if not isinstance(m.get("version"), str) or not VERSION_RE.match(m["version"]):
+            fail(f"{rel}: version must be a version like 1.2.3, got {m.get('version')!r}")
 
     for field in ("name", "version"):
         if claude.get(field) != cursor.get(field):
@@ -65,10 +69,15 @@ def check_manifests() -> None:
     if "server_url" not in opts:
         fail(".claude-plugin/plugin.json: userConfig.server_url is missing")
 
-    # Cursor: the same two as plugin variables.
-    required = set(cursor.get("variables", {}).get("required", []))
-    if required != {"OA_URL", "API_TOKEN"}:
+    # Cursor: the same two as plugin variables, each defined as a string and required.
+    variables = cursor.get("variables", {})
+    required = set(variables.get("required", []))
+    if required != CURSOR_VARIABLES:
         fail(f".cursor-plugin/plugin.json: variables.required must be OA_URL and API_TOKEN, got {sorted(required)}")
+    defined = variables.get("properties", {})
+    for name in sorted(CURSOR_VARIABLES):
+        if not isinstance(defined.get(name), dict) or defined[name].get("type") != "string":
+            fail(f".cursor-plugin/plugin.json: variables.properties.{name} must be defined with type string")
 
     if not market.get("owner", {}).get("name"):
         fail(".claude-plugin/marketplace.json: owner.name is required")

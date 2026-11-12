@@ -8,7 +8,9 @@ description: Explain why a package install from OpenArtifact failed (403, 404, "
 1. **Read the error** and pull out the repository (from the URL in the message or the project's package manager config), the package and, if present, the version.
 2. **Separate access problems from held-back versions.**
    - `401` on every request: no token or an invalid one. Point the user at their credentials (see the `configure-project` skill), never at the token value itself.
-   - `403` on every package: the token lacks `read` on that repository. A registry administrator has to grant it.
+   - `403` on every package has two causes. Tell them apart before suggesting anything: run `check_availability` for one of the failing package versions (on a group, for a member).
+     - Its reasons include `repository_blocked`, or the error text says `repository is blocked`: the repository is blocked as a whole. More access would not help; only an administrator can unblock it.
+     - Otherwise, and `check_availability` itself answers "not found or access denied": the token most likely lacks `read` on that repository, which an administrator grants. Say that this is the likely cause, not a certainty.
    - A failure for one package or version: continue below.
 3. **Ask the registry why.** For a version, `check_availability(repository, package, version)`; when the version is unknown (a range did not resolve), `list_held_back_versions(repository, package)` and `list_proxy_versions(repository, package)`. A group repository has no verdict of its own: check its members instead, in the order `get_repository` lists them under `members` (see the `check-dependency` skill for servers that do not list them).
 4. **Explain each reason** in plain words:
