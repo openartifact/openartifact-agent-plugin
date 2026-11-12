@@ -22,6 +22,10 @@ env:
   # (the one tools/go.mod of openartifact/openartifact pins).
   GO_VERSION: "1.27.4"
   ACTIONLINT_VERSION: "v1.7.12"
+  # agentskills/agentskills has no releases: skills-ref (the reference validator
+  # of the Agent Skills spec, https://agentskills.io) is pinned by commit and
+  # bumped by hand.
+  SKILLS_REF_COMMIT: "f130f348f502d9804278a617f86929846896d2e9"
 
 jobs:
   plugin:
@@ -35,6 +39,30 @@ jobs:
 
       - name: Check manifests, MCP configs and skills
         run: python3 scripts/check-plugin.py
+
+  agentskills:
+    name: agentskills spec (skills-ref)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Install skills-ref
+        run: pip install "git+https://github.com/agentskills/agentskills.git@${SKILLS_REF_COMMIT}#subdirectory=skills-ref"
+
+      - name: Validate every skill against the Agent Skills spec
+        run: |
+          failed=0
+          for skill in skills/*/; do
+            skills-ref validate "$skill" || failed=1
+          done
+          exit "$failed"
 
   reuse:
     name: REUSE compliance
