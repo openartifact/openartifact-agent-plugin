@@ -1,8 +1,11 @@
 version = 1
+SPDX-PackageName = "openartifact-agent-plugin"
+SPDX-PackageSupplier = "The OpenArtifact Authors"
+SPDX-PackageDownloadLocation = "https://github.com/openartifact/openartifact-agent-plugin"
 
 # Manifests (JSON has no comments) and skills (the YAML front matter must come
 # first) carry their licensing here.
 [[annotations]]
-path = [".claude-plugin/**", ".cursor-plugin/**", ".mcp.json", "mcp.json", "skills/**", ".gitignore"]
+path = [".claude-plugin/**", ".cursor-plugin/**", ".mcp.json", "mcp.json", "skills/**", ".gitignore", "LICENSE"]
 SPDX-FileCopyrightText = "The OpenArtifact Authors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
