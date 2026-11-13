@@ -34,7 +34,36 @@ Then set the server URL and an access token with `/plugin configure openartifact
 
 ## Cursor
 
-The plugin also carries a Cursor manifest (`.cursor-plugin/plugin.json`, `mcp.json`). Cursor takes the server URL (`OA_URL`) and the token (`API_TOKEN`) as plugin variables, which a team administrator sets in the Cursor dashboard under **Plugins → Configure**.
+The plugin carries a Cursor manifest (`.cursor-plugin/plugin.json`, `mcp.json`). Cursor reads the server URL and the token from the plugin variables `OA_URL` and `API_TOKEN`, which a team administrator sets in the Cursor dashboard under **Plugins → Configure**. A plugin installed locally has no way to set them, so for one developer, give the plugin's MCP server its connection from your own MCP config instead:
+
+1. Copy the plugin into Cursor's local plugin folder. Cursor skips a symlink to a folder elsewhere, so copy it:
+
+   ```sh
+   git clone https://github.com/openartifact/openartifact-agent-plugin.git
+   mkdir -p ~/.cursor/plugins/local
+   rsync -a --delete --exclude .git --exclude evals openartifact-agent-plugin/ ~/.cursor/plugins/local/openartifact/
+   ```
+
+2. Add a server named `openartifact` to `~/.cursor/mcp.json`, next to any servers already there, with the token read from an environment variable:
+
+   ```json
+   {
+     "mcpServers": {
+       "openartifact": {
+         "url": "https://artifacts.example.com/mcp",
+         "headers": { "Authorization": "Bearer ${env:OPENARTIFACT_TOKEN}" }
+       }
+     }
+   }
+   ```
+
+   Cursor resolves `${env:...}` from its own environment, so set `OPENARTIFACT_TOKEN` where Cursor inherits it (for example start Cursor from a shell that exports it).
+
+3. Run **Developer: Reload Window**. Open **Customize**: the five skills are listed under **Skills**. In **Customize → MCP**, open **Configure** on `openartifact`: it shows two sources. Turn off the **Plugin** source, so the server uses your `mcp.json` entry, and select **Reload**. The environment should show as connected.
+
+Until a URL and token are set, the plugin's own server answers `fetch failed`, because its URL is the unresolved `${OA_URL}/mcp`.
+
+Tested with Cursor 3.9 against OpenArtifact 0.24.0: the agent followed `check-lockfile` on a 132-package `composer.lock`, called `check_dependencies`, and reported the one held package with its rule and reason. Cursor plans differ in whether MCP and skills are included; check yours if Customize does not show them.
 
 ## Development
 
