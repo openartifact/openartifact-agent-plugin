@@ -35,7 +35,25 @@ The registry can hold a version back (a curation rule, the minimum age, a quaran
    - `held`: quote the reason (`detail`), the rule id for a curation hold and the `until` time for a minimum-age hold, and name the `repository` that decided.
    - `not_found`: no repository has that version. Check the name and version, or whether it is published somewhere else.
    - `unknown`: a proxy has not fetched that package's metadata yet, so the registry cannot tell. This is not a failure: installing or fetching the package once fills the cache. Say so plainly instead of calling it blocked.
-5. **Suggest fixes that respect the registry.** For a held or missing version, use the `check-dependency` skill to find a version that is available. Never add the public registry as a fallback, disable the registry config, or fetch a held package another way; if the user needs that version, the way forward is a registry administrator (name the rule or reason).
+   - **When most answers are `unknown`**, the proxy is simply cold, not the project broken. Say that, and give the user a way to warm it: `oa check <repository> --lockfile <file> --fetch` (the `oa` CLI of OpenArtifact releases after 0.24.0) fetches each package's metadata through the registry and checks again; one `composer install` or `npm ci` through the registry does the same. Then offer to check again. Do not list a hundred `unknown` packages one by one.
+5. **Say which dependency pulls a held or missing package in.** The project often requires it only indirectly, and the fix is then to change the package that requires it. Find who requires it from the lockfile:
+
+   `composer.lock`:
+
+   ```sh
+   jq -r --arg n PACKAGE '[(.packages // []), (."packages-dev" // [])] | add | map(select(.require[$n]?)) | .[].name' composer.lock
+   ```
+
+   `package-lock.json` (an aliased package is listed under its folder name, so also try that):
+
+   ```sh
+   jq -r --arg n PACKAGE '[.packages // {} | to_entries[] | select(.key | contains("node_modules/"))
+     | select(((.value.dependencies // {}) + (.value.optionalDependencies // {}) + (.value.peerDependencies // {})) | has($n))
+     | (.value.name // (.key | split("node_modules/") | last))] | unique | join(", ")' package-lock.json
+   ```
+
+   Nothing found means the project requires it directly (check `composer.json` or `package.json`). Otherwise repeat for the requirer until you reach a package the project requires itself, and name that one: it is the dependency to upgrade, replace or ask about (for example "doctrine/cache is pulled in by doctrine/dbal, which your composer.json requires").
+6. **Suggest fixes that respect the registry.** For a held or missing version, use the `check-dependency` skill to find a version that is available. Never add the public registry as a fallback, disable the registry config, or fetch a held package another way; if the user needs that version, the way forward is a registry administrator (name the rule or reason).
 
 **Older servers** have no `check_dependencies` tool. Then say that the whole lockfile cannot be checked in one call, and check the direct dependencies only (`require` and `require-dev` of `composer.json`, `dependencies` and `devDependencies` of `package.json`, at their locked versions) one by one with `check_availability`, as the `check-dependency` skill describes for group repositories.
 

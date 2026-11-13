@@ -57,13 +57,13 @@ The plugin carries a Cursor manifest (`.cursor-plugin/plugin.json`, `mcp.json`).
    }
    ```
 
-   Cursor resolves `${env:...}` from its own environment, so set `OPENARTIFACT_TOKEN` where Cursor inherits it (for example start Cursor from a shell that exports it).
+   Cursor resolves `${env:...}` from its own environment, so set `OPENARTIFACT_TOKEN` where Cursor inherits it (for example start Cursor from a shell that exports it). Writing the token in the file also works, but keep that file out of any repository.
 
-3. Run **Developer: Reload Window**. Open **Customize**: the five skills are listed under **Skills**. In **Customize → MCP**, open **Configure** on `openartifact`: it shows two sources. Turn off the **Plugin** source, so the server uses your `mcp.json` entry, and select **Reload**. The environment should show as connected.
+3. Run **Developer: Reload Window**. Open **Customize**: the five skills are listed under **Skills**. In **Customize → MCP**, open **Configure** on `openartifact`: it now lists your `mcp.json` entry as a second source next to the plugin. If the environment still shows `fetch failed`, turn off the **Plugin** source and select **Reload**; it should show as connected.
 
 Until a URL and token are set, the plugin's own server answers `fetch failed`, because its URL is the unresolved `${OA_URL}/mcp`.
 
-Tested with Cursor 3.9 against OpenArtifact 0.24.0: the agent followed `check-lockfile` on a 132-package `composer.lock`, called `check_dependencies`, and reported the one held package with its rule and reason. Cursor plans differ in whether MCP and skills are included; check yours if Customize does not show them.
+Tested with Cursor 3.9 against OpenArtifact 0.24.0, with the token written in `mcp.json` (the `${env:...}` form is Cursor's documented syntax, not tested here): the agent followed `check-lockfile` on a 132-package `composer.lock`, called `check_dependencies`, and reported the one held package with its rule and reason. Cursor plans differ in whether MCP and skills are included; check yours if Customize does not show them.
 
 ## Development
 
@@ -96,13 +96,18 @@ Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with R
 | `lockfile-unknown-is-not-blocked` | a lockfile is checked in one `check_dependencies` call, and `unknown` is reported as "not cached yet", not as blocked |
 | `blocked-repository-403` | a 403 on every package from a blocked repository is not blamed on missing access |
 | `configure-keeps-the-token-out` | project setup never writes the token into a file or repeats it in a command |
+| `lockfile-cold-proxy` | when almost everything is `unknown`, the proxy is explained as cold, with a way to warm it |
+| `lockfile-required-by` | a held package the project does not require itself is traced to the direct dependency that pulls it in |
+| `find-artifact` | a package search gives the repository, the versions and the registry's download URL |
 
 ```sh
 claude plugin eval . --case blocked-version --runs 1 --ablation none          # one case, once
-claude plugin eval . --scaffold --allow-tools Edit Write                      # the whole suite
+claude plugin eval . --scaffold --allow-tools Edit Write 'Bash(jq:*)'         # the whole suite, with and without the plugin
 ```
 
-The last case creates a `composer.json` with a scaffold script and edits it, so it needs `--scaffold --allow-tools Edit Write`. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
+Last full run (14 November 2026, one run per case and arm, $1.86): every case scored 1.00 with the plugin, mean Δ +0.65 against the same prompts without it. Without the plugin the agent also has no OpenArtifact tools, so Δ measures the plugin as a whole (tools and skills), not the skills alone. `blocked-repository-403` scores 1.00 without it too, because its prompt already contains the server's "repository is blocked" message; it guards against a wrong answer rather than measuring the plugin.
+
+`configure-keeps-the-token-out` and `lockfile-required-by` create their project files with a scaffold script, so the suite needs `--scaffold`; the first edits `composer.json` (`Edit`, `Write`) and the second reads the lockfile with `jq`. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
 
 ## Privacy
 
