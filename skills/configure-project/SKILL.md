@@ -16,6 +16,7 @@ Use the `openartifact` MCP tools. Never invent registry URLs. `client_setup` is 
    - Never write a real token into a file that is or could be committed (`composer.json`, a project `.npmrc` without an env var, `pip.conf` in the repo, `.cargo/config.toml` in the repo).
    - Prefer user-level credentials: for Composer `composer config --global http-basic.<host> token <TOKEN>`; for npm an `.npmrc` line that reads an environment variable (`//<host>/repos/<repo>/:_authToken=${OPENARTIFACT_TOKEN}`); for pip a user-level config or `PIP_INDEX_URL` in the environment.
    - Leave the placeholder in place and tell the user exactly which command to run with their own token, or which environment variable to set. Do not ask the user to paste a token into the chat.
+   - If the user pasted a token into the conversation anyway, never repeat it: not in a file, not in a command you show or run, not in your answer. Write `<TOKEN>` in its place, tell the user to substitute it themselves, and suggest replacing a token that has been shared in a chat.
    - Repository settings that contain no secret (the `repositories` entry of `composer.json`, a `registry=` line) may go into the project.
 5. **Verify** with a harmless read, for example `composer show -a <a package the project already uses>` or `npm view <package> version`, once the user has supplied credentials. If it fails with 401, the token is missing or invalid; for a 403, or a single package that fails, use the `explain-install-failure` skill (a 403 on everything can also mean the repository is blocked).
 

@@ -57,6 +57,24 @@ jq -n --arg url "$OA_URL" --arg token "$OA_TOKEN" '{server_url: $url, api_token:
 
 Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with REUSE and workflow lint) and `claude plugin validate .`. To keep a test away from your own Claude Code setup, run these with `CLAUDE_CONFIG_DIR` pointing to an empty directory.
 
+## Evals
+
+`evals/` holds test prompts that run the skills in a real Claude Code session against mocked OpenArtifact tools (`evals/mocks/openartifact/`, no server needed) and score the answers:
+
+| Case | Checks |
+|---|---|
+| `blocked-version` | a version a curation rule blocks is refused with the reason, and never worked around |
+| `lockfile-unknown-is-not-blocked` | a lockfile is checked in one `check_dependencies` call, and `unknown` is reported as "not cached yet", not as blocked |
+| `blocked-repository-403` | a 403 on every package from a blocked repository is not blamed on missing access |
+| `configure-keeps-the-token-out` | project setup never writes the token into a file or repeats it in a command |
+
+```sh
+claude plugin eval . --case blocked-version --runs 1 --ablation none          # one case, once
+claude plugin eval . --scaffold --allow-tools Edit Write                      # the whole suite
+```
+
+The last case creates a `composer.json` with a scaffold script and edits it, so it needs `--scaffold --allow-tools Edit Write`. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
+
 ## Privacy
 
 The plugin sends requests only to the OpenArtifact server you configure, with the token you give it. It has no server of its own, collects nothing and sends nothing anywhere else. What your OpenArtifact server logs is governed by whoever runs it.
