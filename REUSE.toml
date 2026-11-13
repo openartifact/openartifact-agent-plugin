@@ -6,6 +6,6 @@ SPDX-PackageDownloadLocation = "https://github.com/openartifact/openartifact-age
 # Manifests (JSON has no comments) and skills (the YAML front matter must come
 # first) carry their licensing here.
 [[annotations]]
-path = [".claude-plugin/**", ".cursor-plugin/**", ".mcp.json", "mcp.json", "skills/**", ".gitignore", "LICENSE"]
+path = [".claude-plugin/**", ".cursor-plugin/**", ".mcp.json", "mcp.json", "skills/**", ".gitignore", "LICENSE", "evals/**"]
 SPDX-FileCopyrightText = "The OpenArtifact Authors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
