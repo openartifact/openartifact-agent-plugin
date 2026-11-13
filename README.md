@@ -30,7 +30,7 @@ claude plugin marketplace add openartifact/openartifact-agent-plugin
 claude plugin install openartifact@openartifact
 ```
 
-Claude Code asks for the server URL and the token when the plugin is enabled; the token is kept in secure storage. To change them later, run `/plugin configure openartifact@openartifact` inside Claude Code.
+Then set the server URL and an access token with `/plugin configure openartifact@openartifact` inside Claude Code; run the same command to change them later. Claude Code keeps the token in secure storage. Until both are set, the plugin's MCP server does not connect.
 
 ## Cursor
 
