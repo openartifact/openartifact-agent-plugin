@@ -1,13 +1,13 @@
 ---
 name: check-lockfile
-description: Check every dependency a lockfile pins (composer.lock, package-lock.json, npm-shrinkwrap.json) against the team's OpenArtifact registry in one call, before installing. Use before composer install or npm ci in a project that installs from OpenArtifact, after a dependency update changed the lockfile, when an install fails on several packages, or when the user asks whether the project's dependencies are all allowed or available.
+description: Check every dependency a lockfile pins (composer.lock, package-lock.json, npm-shrinkwrap.json, pnpm-lock.yaml, yarn.lock) against the team's OpenArtifact registry in one call, before installing. Use before composer install, npm ci, pnpm install or yarn install in a project that installs from OpenArtifact, after a dependency update changed the lockfile, when an install fails on several packages, or when the user asks whether the project's dependencies are all allowed or available.
 ---
 
 # Check a lockfile against OpenArtifact
 
 The registry can hold a version back (a curation rule, the minimum age, a quarantine, the license policy) or not have it. `check_dependencies` asks about a whole lockfile at once, also through a group repository, and answers the way the registry serves.
 
-1. **Find the repository** the project installs from: the `repositories` URL of `composer.json`, `registry` in `.npmrc`, ending in `/repos/<name>`. Use that name, also when it is a group. If the project is not configured for OpenArtifact, say so and offer the `configure-project` skill instead of checking.
+1. **Find the repository** the project installs from: the `repositories` URL of `composer.json`, `registry` in `.npmrc` (npm, pnpm, Yarn 1), `npmRegistryServer` in `.yarnrc.yml` (Yarn 2 and later), ending in `/repos/<name>`. Use that name, also when it is a group. If the project is not configured for OpenArtifact, say so and offer the `configure-project` skill instead of checking.
 2. **Extract the pinned versions** with the commands below instead of reading the lockfile yourself: lockfiles are large, and the filters apply the right rules (local path packages, links, bundled packages, workspace folders and git or file dependencies are left out, since no registry serves them).
 
    `composer.lock`:
@@ -29,7 +29,33 @@ The registry can hold a version back (a curation rule, the minimum age, a quaran
      | {package: (.value.name // (.key | split("node_modules/") | last)), version: .value.version}] | unique' package-lock.json
    ```
 
-   If `jq` is missing, or the npm lockfile has no `packages` map (lockfileVersion 1), read the file and build the same list by hand, with the same rules. To leave out development dependencies when the user asks, drop `"packages-dev"` (Composer) or the entries with `"dev": true` (npm).
+   `pnpm-lock.yaml` (`lockfileVersion` 6.0 or 9.0, pnpm 8 and later):
+
+   ```sh
+   tr -d "'" < pnpm-lock.yaml | awk '/^packages:/{p=1;next} /^[^ ]/{p=0} p && /^  [^ ].*:$/{k=$0; sub(/^  /,"",k); sub(/:$/,"",k); sub(/^\//,"",k); sub(/\(.*/,"",k); print k}' \
+     | jq -Rsc '[splits("\n") | capture("^(?<package>(@[^@/]+/)?[^@/]+)@(?<version>[^:/]+)$") | {package, version}] | unique'
+   ```
+
+   `yarn.lock` of Yarn 2 and later (it starts with `__metadata:`):
+
+   ```sh
+   sed -nE 's/^  resolution: "(.+)"$/\1/p' yarn.lock \
+     | jq -Rsc '[splits("\n") | capture("^(?<package>(@[^@/]+/)?[^@/]+)@npm:(?<version>[^:/]+)$") | {package, version}] | unique'
+   ```
+
+   `yarn.lock` of Yarn 1 (it starts with `# yarn lockfile v1`):
+
+   ```sh
+   awk '/^[^ #].*:$/{d=$0; sub(/:$/,"",d); sub(/, .*/,"",d); gsub(/"/,"",d); next} /^  version /{v=$2; gsub(/"/,"",v); print d "\t" v}' yarn.lock \
+     | jq -Rsc '[splits("\n") | select(. != "") | split("\t") | .[1] as $v
+         | (.[0] | capture("^(?<n>(@[^@/]+/)?[^@/]+)@(?<r>.*)$"))
+         | (if (.r | startswith("npm:")) then (.r[4:] | capture("^(?<n>(@[^@/]+/)?[^@/]+)@(?<r>.*)$")) else . end)
+         | select((.r | test("[:/]") | not) and ($v | test("^[^:/]+$"))) | {package: .n, version: $v}] | unique'
+   ```
+
+   **When the `oa` CLI is set up** (OpenArtifact releases after 0.24.0), `oa check <repository> --lockfile <file> --format json` reads all of these lockfiles itself, asks the registry and says what pulls each package in: use its `results` in place of steps 2 and 3. It also covers the cases the commands above do not: a `pnpm-lock.yaml` of `lockfileVersion` 5.x (pnpm 7; the command above returns an empty list for it), and leaving out pnpm's development dependencies.
+
+   If `jq` is missing, or the npm lockfile has no `packages` map (lockfileVersion 1), read the file and build the same list by hand, with the same rules. To leave out development dependencies when the user asks, drop `"packages-dev"` (Composer) or the entries with `"dev": true` (npm); for pnpm use `oa check --no-dev`. `yarn.lock` does not record which dependencies are development-only, so say that they cannot be left out and check them all.
 3. **Ask the registry** with `check_dependencies(repository, packages)`, passing the list as `packages`. It takes at most 1000 entries per call: split a longer list and call it again.
 4. **Report what is not available**, grouped by `status`, and say how many are fine:
    - `held`: quote the reason (`detail`), the rule id for a curation hold and the `until` time for a minimum-age hold, and name the `repository` that decided.
@@ -50,6 +76,18 @@ The registry can hold a version back (a curation rule, the minimum age, a quaran
    jq -r --arg n PACKAGE '[.packages // {} | to_entries[] | select(.key | contains("node_modules/"))
      | select(((.value.dependencies // {}) + (.value.optionalDependencies // {}) + (.value.peerDependencies // {})) | has($n))
      | (.value.name // (.key | split("node_modules/") | last))] | unique | join(", ")' package-lock.json
+   ```
+
+   `pnpm-lock.yaml` (a requirer `.` or another importer path is the project itself):
+
+   ```sh
+   tr -d "'\"" < pnpm-lock.yaml | awk -v n=PACKAGE '/^  [^ ]/{h=$1} /^      [^ ]/{k=$1; sub(/:$/,"",k); if (k==n) print h}' | sort -u
+   ```
+
+   `yarn.lock`, either version (a requirer `…@workspace:` is the project itself; Yarn 1 does not record peer dependencies):
+
+   ```sh
+   tr -d '"' < yarn.lock | awk -v n=PACKAGE '/^[^ #]/{h=$0} /^    [^ ]/{k=$1; sub(/:$/,"",k); if (k==n) print h}' | sort -u
    ```
 
    Nothing found means the project requires it directly (check `composer.json` or `package.json`). Otherwise repeat for the requirer until you reach a package the project requires itself, and name that one: it is the dependency to upgrade, replace or ask about (for example "doctrine/cache is pulled in by doctrine/dbal, which your composer.json requires").
