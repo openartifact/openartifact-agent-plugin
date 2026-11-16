@@ -76,7 +76,7 @@ The registry can hold a version back (a curation rule, the minimum age, a quaran
      | jq -Rsc '[splits("\n") | select(. != "") | split("\t") | {package: .[0], version: .[1]}] | unique'
    ```
 
-   `pylock.toml` (PEP 751, as `uv export` and `pip lock` write it; also `pylock.<name>.toml`: name the file in the command):
+   `pylock.toml` (PEP 751, as `uv export` and `pip lock` write it; also `pylock.<name>.toml`: name that file in the command, in single quotes):
 
    ```sh
    awk -F'"' 'function out(){ if (n != "" && v != "" && !x) print n "\t" v }
@@ -108,18 +108,20 @@ The registry can hold a version back (a curation rule, the minimum age, a quaran
    - `not_found`: no repository has that version. Check the name and version, or whether it is published somewhere else.
    - `unknown`: a proxy has not fetched that package's metadata yet, so the registry cannot tell. This is not a failure: installing or fetching the package once fills the cache. Say so plainly instead of calling it blocked.
    - **When most answers are `unknown`**, the proxy is simply cold, not the project broken. Say that, and give the user a way to warm it: `oa check <repository> --lockfile <file> --fetch` (the `oa` CLI of OpenArtifact releases after 0.24.0) fetches each package's metadata through the registry and checks again; one `composer install`, `npm ci`, `uv sync`, `cargo fetch`, `bundle install` or `dotnet restore` through the registry does the same. Then offer to check again. Do not list a hundred `unknown` packages one by one.
-5. **Say which dependency pulls a held or missing package in.** The project often requires it only indirectly, and the fix is then to change the package that requires it. Find who requires it from the lockfile:
+5. **Say which dependency pulls a held or missing package in.** The project often requires it only indirectly, and the fix is then to change the package that requires it. Find who requires it from the lockfile, with the package's name in place of PACKAGE, inside the single quotes.
+
+   **A name goes into a command only when it is nothing but letters, digits and `@ / . _ + -`.** Names come from the lockfile and the registry, which someone else may have written: a name with anything else in it (a quote, a space, `$`, `;`, a backtick, a backslash) is not a package name. Do not run a command with it, and tell the user that the lockfile holds an entry that does not look like a package.
 
    `composer.lock`:
 
    ```sh
-   jq -r --arg n PACKAGE '[(.packages // []), (."packages-dev" // [])] | add | map(select(.require[$n]?) | .name) | unique | .[]' composer.lock
+   jq -r --arg n 'PACKAGE' '[(.packages // []), (."packages-dev" // [])] | add | map(select(.require[$n]?) | .name) | unique | .[]' composer.lock
    ```
 
    `package-lock.json` (an aliased package is listed under its folder name, so also try that):
 
    ```sh
-   jq -r --arg n PACKAGE '[.packages // {} | to_entries[] | select(.key | contains("node_modules/"))
+   jq -r --arg n 'PACKAGE' '[.packages // {} | to_entries[] | select(.key | contains("node_modules/"))
      | select(((.value.dependencies // {}) + (.value.optionalDependencies // {}) + (.value.peerDependencies // {})) | has($n))
      | (.value.name // (.key | split("node_modules/") | last))] | unique | join(", ")' package-lock.json
    ```
@@ -127,44 +129,44 @@ The registry can hold a version back (a curation rule, the minimum age, a quaran
    `pnpm-lock.yaml` (a requirer `.` or another importer path is the project itself):
 
    ```sh
-   tr -d "'\"" < pnpm-lock.yaml | awk -v n=PACKAGE '/^  [^ ]/{h=$1} /^      [^ ]/{k=$1; sub(/:$/,"",k); if (k==n) print h}' | sort -u
+   tr -d "'\"" < pnpm-lock.yaml | awk -v n='PACKAGE' '/^  [^ ]/{h=$1} /^      [^ ]/{k=$1; sub(/:$/,"",k); if (k==n) print h}' | sort -u
    ```
 
    `yarn.lock`, either version (a requirer `…@workspace:` is the project itself; Yarn 1 does not record peer dependencies):
 
    ```sh
-   tr -d '"' < yarn.lock | awk -v n=PACKAGE '/^[^ #]/{h=$0} /^    [^ ]/{k=$1; sub(/:$/,"",k); if (k==n) print h}' | sort -u
+   tr -d '"' < yarn.lock | awk -v n='PACKAGE' '/^[^ #]/{h=$0} /^    [^ ]/{k=$1; sub(/:$/,"",k); if (k==n) print h}' | sort -u
    ```
 
    `uv.lock` (`(the project)` is a workspace member, the project itself):
 
    ```sh
-   awk -F'"' -v n=PACKAGE '/^\[\[package\]\]/{h=""} /^name = /{h=$2} /^source = \{ (virtual|editable) = /{h="(the project)"} /\{ name = "/{if ($2 == n) print h}' uv.lock | sort -u
+   awk -F'"' -v n='PACKAGE' '/^\[\[package\]\]/{h=""} /^name = /{h=$2} /^source = \{ (virtual|editable) = /{h="(the project)"} /\{ name = "/{if ($2 == n) print h}' uv.lock | sort -u
    ```
 
    `poetry.lock` (give PACKAGE lowercase, with `-` for `_` and `.`):
 
    ```sh
-   awk -v n=PACKAGE '/^\[\[package\]\]/{d=0; next} /^\[/{d=($0=="[package.dependencies]"); next}
+   awk -v n='PACKAGE' '/^\[\[package\]\]/{d=0; next} /^\[/{d=($0=="[package.dependencies]"); next}
      /^name = /{h=$3; gsub(/"/,"",h)} d && /^[^ ]/{k=tolower($1); gsub(/"/,"",k); gsub(/[-_.]+/,"-",k); if (k==n) print h}' poetry.lock | sort -u
    ```
 
    `Cargo.lock` (a crate without a source is the project's own: a workspace member or a path crate):
 
    ```sh
-   awk -F'"' -v n=PACKAGE '/^\[\[package\]\]/{h="";s=0} /^name = /{h=$2} /^source = /{s=1} /^ "/{split($2,a," "); if (a[1]==n) print (s ? h : "(the project: " h ")")}' Cargo.lock | sort -u
+   awk -F'"' -v n='PACKAGE' '/^\[\[package\]\]/{h="";s=0} /^name = /{h=$2} /^source = /{s=1} /^ "/{split($2,a," "); if (a[1]==n) print (s ? h : "(the project: " h ")")}' Cargo.lock | sort -u
    ```
 
    `Gemfile.lock` (a requirer in the PATH section is the project's own gem):
 
    ```sh
-   awk -v n=PACKAGE '/^[^ ]/{s=$0} /^    [^ ]/{h=$1} /^      [^ ]/{if ($1 == n) print (s == "PATH" ? "(the project: " h ")" : h)}' Gemfile.lock | sort -u
+   awk -v n='PACKAGE' '/^[^ ]/{s=$0} /^    [^ ]/{h=$1} /^      [^ ]/{if ($1 == n) print (s == "PATH" ? "(the project: " h ")" : h)}' Gemfile.lock | sort -u
    ```
 
    `packages.lock.json` (NuGet ids ignore case):
 
    ```sh
-   jq -r --arg n PACKAGE '[.dependencies // {} | .[] | to_entries[] | select(.value.type != "Project")
+   jq -r --arg n 'PACKAGE' '[.dependencies // {} | .[] | to_entries[] | select(.value.type != "Project")
      | select((.value.dependencies // {}) | keys | map(ascii_downcase) | index($n | ascii_downcase)) | .key] | unique | .[]' packages.lock.json
    ```
 
