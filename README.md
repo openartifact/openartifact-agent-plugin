@@ -84,7 +84,7 @@ jq -n --arg url "$OA_URL" --arg token "$OA_TOKEN" '{server_url: $url, api_token:
   | claude plugin configure openartifact@openartifact --values-stdin
 ```
 
-Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with REUSE and workflow lint) and `claude plugin validate .`. `python3 scripts/test-skill-commands.py` runs every lockfile command of `check-lockfile` against the real lockfiles in `tests/lockfiles` (copies of the fixtures of `pkg/lockfile` in OpenArtifact) and compares the result with `tests/skill-commands.json`; a command without a case there fails, so a new or changed command comes with its expected output. CI runs it on Ubuntu 22.04 (mawk, jq 1.6), Ubuntu 24.04 and macOS (BSD awk). To keep a test away from your own Claude Code setup, run these with `CLAUDE_CONFIG_DIR` pointing to an empty directory.
+Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with REUSE and workflow lint) and `claude plugin validate .`. The `check-lockfile` skill keeps its steps in `SKILL.md` and what differs per package manager (registry location, commands, development dependencies) in `references/*.md`, one per ecosystem, which the agent reads on demand; `check-plugin.py` fails a reference that is not linked or a link without a file. `python3 scripts/test-skill-commands.py` runs every lockfile command of `check-lockfile` (in `SKILL.md` and the references) against the real lockfiles in `tests/lockfiles` (copies of the fixtures of `pkg/lockfile` in OpenArtifact) and compares the result with `tests/skill-commands.json`; a command without a case there fails, so a new or changed command comes with its expected output. CI runs it on Ubuntu 22.04 (mawk, jq 1.6), Ubuntu 24.04 and macOS (BSD awk). To keep a test away from your own Claude Code setup, run these with `CLAUDE_CONFIG_DIR` pointing to an empty directory.
 
 ## Evals
 
@@ -107,12 +107,12 @@ Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with R
 
 ```sh
 claude plugin eval . --case blocked-version --runs 1 --ablation none          # one case, once
-claude plugin eval . --scaffold --allow-tools Edit Write 'Bash(jq:*)' 'Bash(tr:*)' 'Bash(awk:*)' 'Bash(sed:*)' 'Bash(sort:*)'   # the whole suite, with and without the plugin
+claude plugin eval . --scaffold --allow-tools Edit Write Bash   # the whole suite, with and without the plugin
 ```
 
 Last full run (14 November 2026, one run per case and arm, $1.86): every case scored 1.00 with the plugin, mean Δ +0.65 against the same prompts without it. Without the plugin the agent also has no OpenArtifact tools, so Δ measures the plugin as a whole (tools and skills), not the skills alone. `blocked-repository-403` scores 1.00 without it too, because its prompt already contains the server's "repository is blocked" message; it guards against a wrong answer rather than measuring the plugin.
 
-`configure-keeps-the-token-out`, `lockfile-required-by`, `lockfile-pnpm`, `lockfile-uv`, `lockfile-gemfile`, `lockfile-hostile-name` and `injected-reason` create their project files with a scaffold script, so the suite needs `--scaffold`; the first edits `composer.json` (`Edit`, `Write`), the others read the lockfile with `jq`, `awk`, `tr`, `sed` and `sort`. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
+`configure-keeps-the-token-out`, `lockfile-required-by`, `lockfile-pnpm`, `lockfile-uv`, `lockfile-gemfile`, `lockfile-hostile-name` and `injected-reason` create their project files with a scaffold script, so the suite needs `--scaffold`; the first edits `composer.json` (`Edit`, `Write`), the others run the skill's lockfile commands (`Bash`). Grant `Bash` as a whole: with narrower grants such as `Bash(jq:*)` the sandbox refuses the skill's multi-line commands, the agent reads the lockfile by hand instead, and the commands go untested. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
 
 ## Privacy
 

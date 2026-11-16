@@ -142,6 +142,18 @@ def check_skills() -> None:
             fail(f"{rel}: front matter name must be {d.name!r}, got {fm.get('name')!r}")
         if len(fm.get("description", "")) < 40:
             fail(f"{rel}: front matter needs a description that says when to use the skill")
+        check_references(d, path.read_text(encoding="utf-8"))
+
+
+def check_references(skill: Path, text: str) -> None:
+    """A skill's references/*.md are read on demand from the links of its
+    SKILL.md: every link must lead to a file, and every file must be linked."""
+    linked = set(re.findall(r"\]\((references/[^)#\s]+)\)", text))
+    present = {f"references/{p.name}" for p in (skill / "references").glob("*")} if (skill / "references").is_dir() else set()
+    for rel in sorted(linked - present):
+        fail(f"skills/{skill.name}/SKILL.md: links to {rel}, which does not exist")
+    for rel in sorted(present - linked):
+        fail(f"skills/{skill.name}/{rel}: not linked from SKILL.md, so it is never read")
 
 
 def main() -> int:

@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Run the shell commands of the check-lockfile skill against real lockfiles.
 
-Every ```sh block of skills/check-lockfile/SKILL.md that reads a lockfile is
-named by the label above it: "extract:<file>" for the blocks that list the
+Every ```sh block of skills/check-lockfile (SKILL.md and its references/*.md,
+one per package manager) that reads a lockfile is named by the label above it: "extract:<file>" for the blocks that list the
 pinned versions, "requires:<file>" for those that find what requires PACKAGE
 (a Yarn block adds "@1" or "@2" for its version). tests/skill-commands.json
 gives each block one or more cases: a fixture from tests/lockfiles, copied
@@ -37,7 +37,8 @@ import sys
 import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SKILL = ROOT / "skills" / "check-lockfile" / "SKILL.md"
+SKILL_DIR = ROOT / "skills" / "check-lockfile"
+SOURCES = [SKILL_DIR / "SKILL.md", *sorted((SKILL_DIR / "references").glob("*.md"))]
 CASES = ROOT / "tests" / "skill-commands.json"
 FIXTURES = ROOT / "tests" / "lockfiles"
 
@@ -59,7 +60,8 @@ LOCKFILE = re.compile(r"`([^`]*\.(?:lock|json|yaml|toml))`")
 def blocks():
     """The lockfile command blocks of the skill by name, dedented."""
     out = {}
-    for m in BLOCK.finditer(SKILL.read_text(encoding="utf-8")):
+    text = "\n\n".join(p.read_text(encoding="utf-8") for p in SOURCES)
+    for m in BLOCK.finditer(text):
         label, body = m.group(1), m.group(2)
         file = LOCKFILE.search(label)
         if not file:
@@ -136,7 +138,7 @@ def main():
     for case in cases:
         name = case["block"]
         if name not in found:
-            failures.append(f"{name}: no such block in {SKILL.relative_to(ROOT)}")
+            failures.append(f"{name}: no such block in {SKILL_DIR.relative_to(ROOT)}")
             continue
         lockfile = name.split(":", 1)[1].split("@")[0]
         what = f"{name} on {case['fixture']}" + (f" ({case['package']})" if "package" in case else "")
