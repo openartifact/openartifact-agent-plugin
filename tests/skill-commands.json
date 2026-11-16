@@ -367,5 +367,18 @@
   "package": "Acme.Json",
   "want": [],
   "why": "only the project reference requires it: the project's own"
+ },
+ {
+  "block": "extract:go.sum",
+  "fixture": "go.sum",
+  "want": [
+   "example.com/acme/exp@v0.0.0-20240613232115-7f521ea00fb8",
+   "example.com/acme/mod@v0.17.0",
+   "example.com/acme/quote@v1.5.2",
+   "example.com/acme/sampler@v1.3.0",
+   "example.com/acme/text@v0.0.0-20170915032832-14c0d48ead0c",
+   "example.com/acme/uuid@v1.6.0"
+  ],
+  "why": "each module version once; example.com/acme/mod is listed only as /go.mod and still counts"
  }
 ]

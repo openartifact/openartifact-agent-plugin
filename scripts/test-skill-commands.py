@@ -54,7 +54,7 @@ HOSTILE = [
 ]
 
 BLOCK = re.compile(r"(?m)^[ \t]*(\S[^\n]*)\n\n[ \t]*```sh\n(.*?)^[ \t]*```", re.S)
-LOCKFILE = re.compile(r"`([^`]*\.(?:lock|json|yaml|toml))`")
+LOCKFILE = re.compile(r"`([^`]*\.(?:lock|json|yaml|toml|sum))`")
 
 
 def blocks():
