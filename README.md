@@ -84,7 +84,7 @@ jq -n --arg url "$OA_URL" --arg token "$OA_TOKEN" '{server_url: $url, api_token:
   | claude plugin configure openartifact@openartifact --values-stdin
 ```
 
-Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with REUSE and workflow lint) and `claude plugin validate .`. To keep a test away from your own Claude Code setup, run these with `CLAUDE_CONFIG_DIR` pointing to an empty directory.
+Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with REUSE and workflow lint) and `claude plugin validate .`. `python3 scripts/test-skill-commands.py` runs every lockfile command of `check-lockfile` against the real lockfiles in `tests/lockfiles` (copies of the fixtures of `pkg/lockfile` in OpenArtifact) and compares the result with `tests/skill-commands.json`; a command without a case there fails, so a new or changed command comes with its expected output. CI runs it on Ubuntu 22.04 (mawk, jq 1.6), Ubuntu 24.04 and macOS (BSD awk). To keep a test away from your own Claude Code setup, run these with `CLAUDE_CONFIG_DIR` pointing to an empty directory.
 
 ## Evals
 

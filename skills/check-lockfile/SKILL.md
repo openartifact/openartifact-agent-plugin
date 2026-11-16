@@ -90,7 +90,7 @@ The registry can hold a version back (a curation rule, the minimum age, a quaran
    `composer.lock`:
 
    ```sh
-   jq -r --arg n PACKAGE '[(.packages // []), (."packages-dev" // [])] | add | map(select(.require[$n]?)) | .[].name' composer.lock
+   jq -r --arg n PACKAGE '[(.packages // []), (."packages-dev" // [])] | add | map(select(.require[$n]?) | .name) | unique | .[]' composer.lock
    ```
 
    `package-lock.json` (an aliased package is listed under its folder name, so also try that):
