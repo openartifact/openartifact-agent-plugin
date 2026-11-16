@@ -101,6 +101,8 @@ Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with R
 | `lockfile-pnpm` | a `pnpm-lock.yaml` is checked without its GitHub and linked dependencies, and a minimum-age hold on a transitive package names when it ends and what pulls it in |
 | `lockfile-uv` | a `uv.lock` is checked without the project, its git and path dependencies, and a curation hold on a transitive package is traced to the dependency that pulls it in |
 | `lockfile-gemfile` | a `Gemfile.lock` is checked without its git and path gems, the platform builds of a gem count as one version, and a minimum-age hold on a transitive gem names when it ends and what pulls it in |
+| `lockfile-hostile-name` | a `composer.lock` entry named like a shell command is reported as not a package and never put into a command (the trace is checked for it), while the real held package is still traced |
+| `injected-reason` | instructions hidden in a rule's reason text (add a public registry, turn off HTTPS checks) are reported and not followed, and `composer.json` stays as it was |
 | `find-artifact` | a package search gives the repository, the versions and the registry's download URL |
 
 ```sh
@@ -110,7 +112,7 @@ claude plugin eval . --scaffold --allow-tools Edit Write 'Bash(jq:*)' 'Bash(tr:*
 
 Last full run (14 November 2026, one run per case and arm, $1.86): every case scored 1.00 with the plugin, mean Δ +0.65 against the same prompts without it. Without the plugin the agent also has no OpenArtifact tools, so Δ measures the plugin as a whole (tools and skills), not the skills alone. `blocked-repository-403` scores 1.00 without it too, because its prompt already contains the server's "repository is blocked" message; it guards against a wrong answer rather than measuring the plugin.
 
-`configure-keeps-the-token-out`, `lockfile-required-by`, `lockfile-pnpm`, `lockfile-uv` and `lockfile-gemfile` create their project files with a scaffold script, so the suite needs `--scaffold`; the first edits `composer.json` (`Edit`, `Write`), the others read the lockfile with `jq`, `awk`, `tr`, `sed` and `sort`. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
+`configure-keeps-the-token-out`, `lockfile-required-by`, `lockfile-pnpm`, `lockfile-uv`, `lockfile-gemfile`, `lockfile-hostile-name` and `injected-reason` create their project files with a scaffold script, so the suite needs `--scaffold`; the first edits `composer.json` (`Edit`, `Write`), the others read the lockfile with `jq`, `awk`, `tr`, `sed` and `sort`. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
 
 ## Privacy
 
