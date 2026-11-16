@@ -36,7 +36,7 @@ CASES = ROOT / "tests" / "skill-commands.json"
 FIXTURES = ROOT / "tests" / "lockfiles"
 
 BLOCK = re.compile(r"(?m)^[ \t]*(\S[^\n]*)\n\n[ \t]*```sh\n(.*?)^[ \t]*```", re.S)
-LOCKFILE = re.compile(r"`([^`]*\.(?:lock|json|yaml))`")
+LOCKFILE = re.compile(r"`([^`]*\.(?:lock|json|yaml|toml))`")
 
 
 def blocks():
