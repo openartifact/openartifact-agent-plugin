@@ -64,6 +64,30 @@ jobs:
           done
           exit "$failed"
 
+  skill-commands:
+    # The awk, jq and sed of the check-lockfile skill run on the user's machine:
+    # Ubuntu 22.04 has mawk and jq 1.6, macOS BSD awk.
+    name: skill commands (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Tool versions
+        run: |
+          jq --version
+          awk -W version 2>&1 | head -n 1 || true
+          awk --version 2>&1 | head -n 1 || true
+
+      - name: Run the skill's lockfile commands against real lockfiles
+        run: python3 scripts/test-skill-commands.py
+
   reuse:
     name: REUSE compliance
     runs-on: ubuntu-latest
