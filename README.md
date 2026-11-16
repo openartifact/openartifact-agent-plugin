@@ -12,7 +12,7 @@ Use your [OpenArtifact](https://github.com/openartifact/openartifact) registry f
 |---|---|
 | `configure-project` | Points Composer, npm, pip, Go, Cargo and other package managers at your OpenArtifact repository, from the server's own setup snippets, without writing a token into the project |
 | `check-dependency` | Before adding or upgrading a dependency, checks that the registry will serve that version (curation rules, minimum age, quarantine, license policy) and picks one it will |
-| `check-lockfile` | Checks every dependency of a `composer.lock`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `uv.lock`, `poetry.lock` or `Cargo.lock` against the registry in one call, also through a group, and reports what is held, missing or not yet known (needs a server with the `check_dependencies` tool; older servers get a check of the direct dependencies) |
+| `check-lockfile` | Checks every dependency of a `composer.lock`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `uv.lock`, `poetry.lock`, `pylock.toml`, `Cargo.lock`, `Gemfile.lock` or `packages.lock.json` against the registry in one call, also through a group, and reports what is held, missing or not yet known (needs a server with the `check_dependencies` tool; older servers get a check of the direct dependencies) |
 | `find-artifact` | Finds packages, files and images across the repositories you can read: by name, by project, by your role in a project ("shared with me") or by property (`prop:status=approved`), and gives the version list and download URL |
 | `explain-install-failure` | Turns a 403 or 404 from the registry into the reason (with the rule, or when the version unlocks) and a fix that respects it |
 
@@ -100,6 +100,7 @@ Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with R
 | `lockfile-required-by` | a held package the project does not require itself is traced to the direct dependency that pulls it in |
 | `lockfile-pnpm` | a `pnpm-lock.yaml` is checked without its GitHub and linked dependencies, and a minimum-age hold on a transitive package names when it ends and what pulls it in |
 | `lockfile-uv` | a `uv.lock` is checked without the project, its git and path dependencies, and a curation hold on a transitive package is traced to the dependency that pulls it in |
+| `lockfile-gemfile` | a `Gemfile.lock` is checked without its git and path gems, the platform builds of a gem count as one version, and a minimum-age hold on a transitive gem names when it ends and what pulls it in |
 | `find-artifact` | a package search gives the repository, the versions and the registry's download URL |
 
 ```sh
@@ -109,7 +110,7 @@ claude plugin eval . --scaffold --allow-tools Edit Write 'Bash(jq:*)' 'Bash(tr:*
 
 Last full run (14 November 2026, one run per case and arm, $1.86): every case scored 1.00 with the plugin, mean Δ +0.65 against the same prompts without it. Without the plugin the agent also has no OpenArtifact tools, so Δ measures the plugin as a whole (tools and skills), not the skills alone. `blocked-repository-403` scores 1.00 without it too, because its prompt already contains the server's "repository is blocked" message; it guards against a wrong answer rather than measuring the plugin.
 
-`configure-keeps-the-token-out`, `lockfile-required-by`, `lockfile-pnpm` and `lockfile-uv` create their project files with a scaffold script, so the suite needs `--scaffold`; the first edits `composer.json` (`Edit`, `Write`), the others read the lockfile with `jq`, `awk`, `tr`, `sed` and `sort`. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
+`configure-keeps-the-token-out`, `lockfile-required-by`, `lockfile-pnpm`, `lockfile-uv` and `lockfile-gemfile` create their project files with a scaffold script, so the suite needs `--scaffold`; the first edits `composer.json` (`Edit`, `Write`), the others read the lockfile with `jq`, `awk`, `tr`, `sed` and `sort`. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
 
 ## Privacy
 
