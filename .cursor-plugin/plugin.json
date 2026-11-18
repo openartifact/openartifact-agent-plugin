@@ -1,7 +1,7 @@
 {
   "name": "openartifact",
   "description": "Use your OpenArtifact registry from the agent: configure package managers for it, check dependencies against its curation, minimum-age, quarantine and license decisions, explain install failures, and report what its scans found. Read-only.",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "author": {
     "name": "The OpenArtifact Authors"
   },
