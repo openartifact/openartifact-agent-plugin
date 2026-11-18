@@ -93,6 +93,8 @@ Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with R
 | Case | Checks |
 |---|---|
 | `blocked-version` | a version a curation rule blocks is refused with the reason, and never worked around |
+| `bundle-add` | adding a gem with `bundle add` is checked first, and a minimum-age hold names when it ends and the newest available version |
+| `deleted-version` | a version that used to install and is now missing is traced in the repository's activity to who moved it to the trash and when |
 | `lockfile-unknown-is-not-blocked` | a lockfile is checked in one `check_dependencies` call, and `unknown` is reported as "not cached yet", not as blocked |
 | `blocked-repository-403` | a 403 on every package from a blocked repository is not blamed on missing access |
 | `configure-keeps-the-token-out` | project setup never writes the token into a file or repeats it in a command |

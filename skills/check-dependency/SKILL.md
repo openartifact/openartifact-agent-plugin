@@ -1,13 +1,13 @@
 ---
 name: check-dependency
-description: Before adding, upgrading or pinning a dependency in a project that installs from OpenArtifact, check that the registry will serve that version, and pick one it will. Use whenever you are about to run composer require, npm install <pkg>, pip install, go get, cargo add or edit a dependency version, and when the user asks whether a package or version is allowed.
+description: Before adding, upgrading or pinning a dependency in a project that installs from OpenArtifact, check that the registry will serve that version, and pick one it will. Use whenever you are about to run composer require, npm install <pkg>, pnpm add, yarn add, pip install, uv add, poetry add, go get, cargo add, bundle add, gem install, dotnet add package or edit a dependency version, and when the user asks whether a package or version is allowed.
 ---
 
 # Check a dependency against OpenArtifact
 
 The registry may hold a version back: a curation rule blocks it, it is younger than the proxy's minimum age, a scan or license policy quarantined it, or the repository is blocked. Check before changing the project, so the install does not fail halfway.
 
-1. **Find the repository** the project installs from (its package manager config: the `repositories` of `composer.json`, `registry` in `.npmrc`, the pip index URL, `GOPROXY`). If the project is not configured for OpenArtifact, say so and offer the `configure-project` skill instead of checking.
+1. **Find the repository** the project installs from (its package manager config: the `repositories` of `composer.json`, `registry` in `.npmrc`, the pip index URL, `[[tool.uv.index]]` or `[[tool.poetry.source]]` in `pyproject.toml`, `GOPROXY`, the registries in `.cargo/config.toml`, `source` in the `Gemfile`, the `packageSources` of `nuget.config`). If the project is not configured for OpenArtifact, say so and offer the `configure-project` skill instead of checking.
 2. **Groups have no verdict of their own**: `check_availability` on a group is an error. If `get_repository(name)` shows `repo_type: group`, check its members instead: `get_repository` lists them under `members` in group order. The group decides like this: unless the group has `merge_proxy_versions` set, a package name that a hosted member holds is decided by the hosted members only; otherwise the first member in order that has the version decides it, even if that member holds it back (its 403 fails the install, and a later member is not tried). Servers before that field existed do not list members; then take the proxy and hosted repositories of the same format from `list_repositories(format=...)`. Usually there is one proxy (it carries the curation and minimum-age decisions) and one or more hosted repositories (they carry the quarantine and license holds of stored versions). If several proxies of that format exist and nothing tells which belong to the group, ask the user.
 3. **Check the exact version** with `check_availability(repository, package, version)`.
    - `available: true`: go ahead.
