@@ -8,7 +8,7 @@
     {
       "name": "openartifact",
       "source": "./",
-      "description": "Configure package managers for your OpenArtifact registry, check dependencies against its decisions and explain install failures. Read-only."
+      "description": "Configure package managers for your OpenArtifact registry, check dependencies against its decisions, explain install failures and report scan results. Read-only."
     }
   ]
 }
