@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # OpenArtifact agent plugin
 
-Use your [OpenArtifact](https://github.com/openartifact/openartifact) registry from a coding agent. The plugin connects the agent to OpenArtifact's MCP server and teaches it five things:
+Use your [OpenArtifact](https://github.com/openartifact/openartifact) registry from a coding agent. The plugin connects the agent to OpenArtifact's MCP server and teaches it six things:
 
 | Skill | What the agent does |
 |---|---|
@@ -14,14 +14,15 @@ Use your [OpenArtifact](https://github.com/openartifact/openartifact) registry f
 | `check-dependency` | Before adding or upgrading a dependency, checks that the registry will serve that version (curation rules, minimum age, quarantine, license policy) and picks one it will |
 | `check-lockfile` | Checks every dependency of a `composer.lock`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `uv.lock`, `poetry.lock`, `pylock.toml`, `Cargo.lock`, `Gemfile.lock`, `packages.lock.json` or `go.sum` against the registry in one call, also through a group, and reports what is held, missing or not yet known (needs a server with the `check_dependencies` tool; older servers get a check of the direct dependencies) |
 | `find-artifact` | Finds packages, files and images across the repositories you can read: by name, by project, by your role in a project ("shared with me") or by property (`prop:status=approved`), and gives the version list and download URL |
-| `explain-install-failure` | Turns a 403 or 404 from the registry into the reason (with the rule, or when the version unlocks) and a fix that respects it |
+| `explain-install-failure` | Turns a 403 or 404 from the registry into the reason (with the rule, or when the version unlocks) and a fix that respects it; for a version that used to install, finds in the repository's activity who moved it to the trash or quarantined it, and when |
+| `review-artifact-security` | Reports what the registry's scans found for a stored version or repository: vulnerabilities ranked by exploitation (CISA KEV, EPSS) with their fixes, licenses that need a review, and the components in its SBOM (needs an administrator's token) |
 
 The plugin is read-only: it only calls OpenArtifact's read tools, and the agent is told never to work around the registry (no public-registry fallback, no disabled config).
 
 ## Requirements
 
 - An OpenArtifact server with MCP enabled (`MCP_ENABLED=true`, and `BASE_URL` set to the address clients reach). See [MCP server](https://github.com/openartifact/openartifact/blob/main/docs/integrations/mcp.md).
-- An API token. A [read-only token](https://github.com/openartifact/openartifact/blob/main/docs/integrations/mcp.md#read-only-token) is enough and recommended.
+- An API token. A [read-only token](https://github.com/openartifact/openartifact/blob/main/docs/integrations/mcp.md#read-only-token) is enough and recommended. Only `review-artifact-security` needs more: OpenArtifact gives scan results to administrators only, so with a read-only token that skill says so and the others work as usual.
 
 ## Claude Code
 
@@ -94,6 +95,7 @@ Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with R
 |---|---|
 | `blocked-version` | a version a curation rule blocks is refused with the reason, and never worked around |
 | `bundle-add` | adding a gem with `bundle add` is checked first, and a minimum-age hold names when it ends and the newest available version |
+| `security-review` | a ship-or-not question reports the exploited vulnerability first with its unpublished fix, the license that needs a review, and calls nothing safe |
 | `deleted-version` | a version that used to install and is now missing is traced in the repository's activity to who moved it to the trash and when |
 | `lockfile-unknown-is-not-blocked` | a lockfile is checked in one `check_dependencies` call, and `unknown` is reported as "not cached yet", not as blocked |
 | `blocked-repository-403` | a 403 on every package from a blocked repository is not blamed on missing access |
