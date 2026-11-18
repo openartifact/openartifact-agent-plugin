@@ -99,7 +99,9 @@ Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with R
 | `deleted-version` | a version that used to install and is now missing is traced in the repository's activity to who moved it to the trash and when |
 | `lockfile-unknown-is-not-blocked` | a lockfile is checked in one `check_dependencies` call, and `unknown` is reported as "not cached yet", not as blocked |
 | `blocked-repository-403` | a 403 on every package from a blocked repository is not blamed on missing access |
-| `configure-keeps-the-token-out` | project setup never writes the token into a file or repeats it in a command |
+| `configure-keeps-the-token-out` | Composer project setup never writes the token into a file, a command or the answer |
+| `configure-npm-keeps-the-token-out` | npm setup puts the registry into the project's `.npmrc` and the token only behind an environment variable or a step the user runs |
+| `configure-uv-keeps-the-token-out` | uv setup adds the registry as the default index in `pyproject.toml`, with no credentials in its URL, and the token in uv's environment variables |
 | `lockfile-cold-proxy` | when almost everything is `unknown`, the proxy is explained as cold, with a way to warm it |
 | `lockfile-required-by` | a held package the project does not require itself is traced to the direct dependency that pulls it in |
 | `lockfile-pnpm` | a `pnpm-lock.yaml` is checked without its GitHub and linked dependencies, and a minimum-age hold on a transitive package names when it ends and what pulls it in |
@@ -117,7 +119,7 @@ claude plugin eval . --scaffold --allow-tools Edit Write Bash   # the whole suit
 
 Last full run (14 November 2026, one run per case and arm, $1.86): every case scored 1.00 with the plugin, mean Δ +0.65 against the same prompts without it. Without the plugin the agent also has no OpenArtifact tools, so Δ measures the plugin as a whole (tools and skills), not the skills alone. `blocked-repository-403` scores 1.00 without it too, because its prompt already contains the server's "repository is blocked" message; it guards against a wrong answer rather than measuring the plugin.
 
-`configure-keeps-the-token-out`, `lockfile-required-by`, `lockfile-pnpm`, `lockfile-uv`, `lockfile-gemfile`, `lockfile-gosum`, `lockfile-hostile-name` and `injected-reason` create their project files with a scaffold script, so the suite needs `--scaffold`; the first edits `composer.json` (`Edit`, `Write`), the others run the skill's lockfile commands (`Bash`). Grant `Bash` as a whole: with narrower grants such as `Bash(jq:*)` the sandbox refuses the skill's multi-line commands, the agent reads the lockfile by hand instead, and the commands go untested. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
+`configure-keeps-the-token-out`, `configure-npm-keeps-the-token-out`, `configure-uv-keeps-the-token-out`, `lockfile-required-by`, `lockfile-pnpm`, `lockfile-uv`, `lockfile-gemfile`, `lockfile-gosum`, `lockfile-hostile-name` and `injected-reason` create their project files with a scaffold script, so the suite needs `--scaffold`; the three `configure-` cases edit project files (`Edit`, `Write`, `Bash`), the others run the skill's lockfile commands (`Bash`). Grant `Bash` as a whole: with narrower grants such as `Bash(jq:*)` the sandbox refuses the skill's multi-line commands, the agent reads the lockfile by hand instead, and the commands go untested. Runs use your own Claude credentials and count against your usage: one run of one case costs about $0.10 at list price, and the default is each case's `runs` with and without the plugin. CI does not run them. Run the suite before a release and after changing a skill.
 
 ## Privacy
 
