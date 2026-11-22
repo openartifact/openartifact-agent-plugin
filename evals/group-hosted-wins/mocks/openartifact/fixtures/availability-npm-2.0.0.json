@@ -1,0 +1,1 @@
+a group repository has no availability of its own: use check_dependencies, which answers for a group, or ask its members (get_repository lists them in group order)
