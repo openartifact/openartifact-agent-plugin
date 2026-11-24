@@ -13,7 +13,7 @@ Use your [OpenArtifact](https://github.com/openartifact/openartifact) registry f
 | `configure-project` | Points Composer, npm, pip, Go, Cargo and other package managers at your OpenArtifact repository, from the server's own setup snippets, without writing a token into the project |
 | `check-dependency` | Before adding or upgrading a dependency, checks that the registry will serve that version (curation rules, minimum age, quarantine, license policy) and picks one it will |
 | `check-lockfile` | Checks every dependency of a `composer.lock`, `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `uv.lock`, `poetry.lock`, `pylock.toml`, `Cargo.lock`, `Gemfile.lock`, `packages.lock.json` or `go.sum` against the registry in one call, also through a group, and reports what is held, missing or not yet known (needs a server with the `check_dependencies` tool; older servers get a check of the direct dependencies) |
-| `find-artifact` | Finds packages, files and images across the repositories you can read: by name, by project, by your role in a project ("shared with me") or by property (`prop:status=approved`), and gives the version list and download URL |
+| `find-artifact` | Finds packages, files and images across the repositories you can read: by name, by project, by your role in a project ("shared with me") or by property (`prop:status=approved`) or by topic through the registry's AI tags ("a PDF library"; servers after 0.25.0), and gives the version list and download URL |
 | `explain-install-failure` | Turns a 403 or 404 from the registry into the reason (with the rule, or when the version unlocks) and a fix that respects it; for a version that used to install, finds in the repository's activity who moved it to the trash or quarantined it, and when |
 | `review-artifact-security` | Reports what the registry's scans found for a stored version or repository: vulnerabilities ranked by exploitation (CISA KEV, EPSS) with their fixes, licenses that need a review, and the components in its SBOM (needs an administrator's token), and the registry's AI analysis of a package, labelled as a model's opinion (read access is enough) |
 
@@ -113,6 +113,7 @@ Check the manifests with `python3 scripts/check-plugin.py` (what CI runs, with R
 | `lockfile-gosum` | a `go.sum` is checked with each module version once (also the ones listed only as `/go.mod`), a held module is traced through `go.mod`, and a pseudo-version the proxy has not seen is unknown, not missing |
 | `lockfile-hostile-name` | a `composer.lock` entry named like a shell command is reported as not a package and never put into a command (the trace is checked for it), while the real held package is still traced |
 | `injected-reason` | instructions hidden in a rule's reason text (add a public registry, turn off HTTPS checks) are reported and not followed, and `composer.json` stays as it was |
+| `find-by-topic` | "do we already have a PDF library" is searched by AI tag, finds the package whose name does not say so, and labels the tag as a model's label |
 | `find-artifact` | a package search gives the repository, the versions and the registry's download URL |
 
 ```sh
