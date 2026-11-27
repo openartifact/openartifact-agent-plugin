@@ -156,7 +156,34 @@ def check_references(skill: Path, text: str) -> None:
         fail(f"skills/{skill.name}/{rel}: not linked from SKILL.md, so it is never read")
 
 
+UNTIL_RE = re.compile(r'"until":\s*"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"')
+UNTIL_MARGIN_DAYS = 30
+
+
+def check_eval_dates(now: "datetime | None" = None) -> None:
+    """The eval mocks are static, so a minimum-age hold they describe ends on a
+    fixed date. Once that date has passed, the agent rightly reports that the
+    hold should be over, and the case fails for a reason that has nothing to do
+    with the skill. Fail early instead: every mocked `until` must lie more than
+    UNTIL_MARGIN_DAYS ahead. Move the dates (and the graders that name them)
+    forward when this fires."""
+    from datetime import datetime, timedelta, timezone
+
+    now = now or datetime.now(timezone.utc)
+    horizon = now + timedelta(days=UNTIL_MARGIN_DAYS)
+    evals = ROOT / "evals"
+    for path in sorted(evals.rglob("*")):
+        if not path.is_file() or path.suffix not in {".md", ".json"} or "results" in path.relative_to(evals).parts:
+            continue
+        for until in sorted(set(UNTIL_RE.findall(path.read_text(encoding="utf-8")))):
+            when = datetime.strptime(until, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+            if when <= horizon:
+                state = "has passed" if when <= now else f"is less than {UNTIL_MARGIN_DAYS} days away"
+                fail(f"{path.relative_to(ROOT)}: the mocked hold ends {until}, which {state}; move it forward")
+
+
 def main() -> int:
+    check_eval_dates()
     check_manifests()
     check_mcp(".mcp.json", "${user_config.server_url}/mcp", "Bearer ${user_config.api_token}", need_type=True)
     check_mcp("mcp.json", "${OA_URL}/mcp", "Bearer ${API_TOKEN}", need_type=False)

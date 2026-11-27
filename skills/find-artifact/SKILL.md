@@ -1,6 +1,6 @@
 ---
 name: find-artifact
-description: Find packages, files and docker images in the team's OpenArtifact registry, across every repository the user can read. Use when the user asks where something is stored, whether a package or version exists in the registry, which artifacts carry a property (a build number, status, release channel), what a project owns or what was shared with them, or wants a download URL or install command for something in the registry.
+description: Find packages, files and docker images in the team's OpenArtifact registry, across every repository the user can read. Use when the user asks where something is stored, whether a package or version exists in the registry, whether the team already has a package for a job (a PDF library, an HTTP client), which artifacts carry a property (a build number, status, release channel), what a project owns or what was shared with them, or wants a download URL or install command for something in the registry.
 ---
 
 # Find an artifact in OpenArtifact
@@ -12,6 +12,8 @@ Use the `openartifact` MCP tools. They only see the repositories the user's toke
    - `project:acme`: only repositories of that project (name or slug). Only projects the user has a role in match.
    - `project_role:viewer` (or `developer`, `maintainer`, `owner`): repositories of projects where the user has that role. Use it for "what was shared with me" (`project_role:viewer`) and "what do I own" (`project_role:owner`).
    - `prop:KEY=VALUE`: artifacts carrying that property, exact match on both; repeat it and all must hold (at most 10). For example `prop:status=approved prop:build.name=nightly`. With a `prop:` filter the text may be left out.
+
+   **By topic** (servers after OpenArtifact 0.25.0 with AI analysis on): the text also finds the artifacts whose AI analysis has it as a tag, so "do we have a PDF library" can be searched as `pdf`. The whole text must equal one tag (case does not matter, several words are one tag, as in `web framework`); a part of a tag does not match, and `name:` searches names only. A hit does not say why it matched: one whose name does not contain the text was found by its tag. Say so, and that the tag is a language model's label of the package, not a checked fact; `get_artifact_analysis(repository_id, artifact_id)` (the hit's `id`, and the repository's `id` from `get_repository`) shows its tags and summary. Try a word or two the way a tag would put it (`pdf`, `cryptography`, `http client`) rather than a sentence.
 2. **Narrow when the answer is too broad.** If the tool says the query matches too many results, add `repo:`, `format:`, `project:` or a `prop:` filter, as the error suggests, instead of paging blindly. If nothing matches, say so, but do not conclude the artifact exists nowhere: the search covers recent stored packages, repositories the token cannot read are invisible, and a package a proxy repository fetches from its upstream on demand is not listed (for those, `list_proxy_versions(repository, package)` shows what the proxy knows).
 3. **Get the details** of a hit:
    - `get_package(repository, name)` lists every version with filename, size, sha256, creation time and a download URL.
