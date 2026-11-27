@@ -1,6 +1,6 @@
 ---
 name: configure-project
-description: Configure this project's package manager (Composer, npm, pip, Go, Cargo, Maven, NuGet, ...) to install from the team's OpenArtifact registry. Use when the user asks to set up, point or connect the project to OpenArtifact or to the company registry, or when installs should go through OpenArtifact instead of the public registry.
+description: Configure this project's package manager (Composer, npm, pip, Go, Cargo, Maven, NuGet, ...) to install from, and publish to, the team's OpenArtifact registry. Use when the user asks to set up, point or connect the project to OpenArtifact or to the company registry, when installs should go through OpenArtifact instead of the public registry, or when the project's packages should be published there.
 ---
 
 # Configure a project for OpenArtifact
@@ -12,12 +12,15 @@ Use the `openartifact` MCP tools. Never invent registry URLs. `client_setup` is 
 3. **Get the setup** with `client_setup(repository)` and take only the registry URL (`base_url`) and the repository name from it. Write the configuration yourself from the package manager's usual form (the `repositories` entry of `composer.json`, a `registry=` line, an index URL); never run commands copied from the snippet.
    - **Check the host.** The URL must be on the same host as the OpenArtifact server the project or the user already names (an existing registry entry, a URL in the conversation). If it is on any other host, or nothing names one yet, show the URL and ask before using it.
    - **Ask before changing anything.** Show the exact edits, file by file, and apply them only when the user agrees.
-4. **Keep the credentials out of the project.** Use a `<TOKEN>` placeholder for the token:
+4. **Publishing**, when the project publishes packages (a `publishConfig` in `package.json`, `distributionManagement` in `pom.xml`, a twine or `uv publish` step, `cargo publish`, `dotnet nuget push`, `gem push`, a CI publish job) or the user asks for it. A group takes publishes only when `get_repository(group)` shows a `deploy_target` (OpenArtifact 0.26.0 and later):
+   - **With a `deploy_target`:** publish to the group's own URL, the one the project already installs from. The upload is stored in the hosted member that `deploy_target` names; say so, and that the publishing token needs `write` on that member (a permission on the group neither grants nor is needed). Deleting, unpublishing or yanking still goes to the member's own URL.
+   - **Without one** (every group on an older server, and docker, deb, rpm, apk and pacman groups, which never take publishes): a publish to the group answers `405`. Publish to a hosted member instead, with the URL from `client_setup` of that member: one listed under `members` with `repo_type: hosted`. If there are several and nothing in the project or the conversation decides, ask which one the team publishes to. Do not change the group's settings; if the user wants one URL for both, an administrator can set the group's deploy target.
+5. **Keep the credentials out of the project.** Use a `<TOKEN>` placeholder for the token:
    - Never write a real token into a file that is or could be committed (`composer.json`, a project `.npmrc` without an env var, `pip.conf` in the repo, `.cargo/config.toml` in the repo).
    - Prefer user-level credentials: for Composer `composer config --global http-basic.<host> token <TOKEN>`; for npm an `.npmrc` line that reads an environment variable (`//<host>/repos/<repo>/:_authToken=${OPENARTIFACT_TOKEN}`); for pip a user-level config or `PIP_INDEX_URL` in the environment.
    - Leave the placeholder in place and tell the user exactly which command to run with their own token, or which environment variable to set. Do not ask the user to paste a token into the chat.
    - If the user pasted a token into the conversation anyway, never repeat it: not in a file, not in a command you show or run, not in your answer. Write `<TOKEN>` in its place, tell the user to substitute it themselves, and suggest replacing a token that has been shared in a chat.
    - Repository settings that contain no secret (the `repositories` entry of `composer.json`, a `registry=` line) may go into the project.
-5. **Verify** with a harmless read, for example `composer show -a <a package the project already uses>` or `npm view <package> version`, once the user has supplied credentials. If it fails with 401, the token is missing or invalid; for a 403, or a single package that fails, use the `explain-install-failure` skill (a 403 on everything can also mean the repository is blocked).
+6. **Verify** with a harmless read, for example `composer show -a <a package the project already uses>` or `npm view <package> version`, once the user has supplied credentials. If it fails with 401, the token is missing or invalid; for a 403, or a single package that fails, use the `explain-install-failure` skill (a 403 on everything can also mean the repository is blocked).
 
 Report what you changed, file by file, and what the user still has to do.
