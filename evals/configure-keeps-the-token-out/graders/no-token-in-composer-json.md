@@ -1,6 +1,8 @@
 ---
 type: regex
-target: files
+target:
+  source: file
+  path: composer.json
 pattern: "oa_pat_EVALSECRET"
 match: not_contains
 weight: 3
