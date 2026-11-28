@@ -127,6 +127,20 @@ def front_matter(text: str) -> dict:
     return out
 
 
+def plain_scalar_problem(value: str) -> str:
+    """What makes an unquoted YAML value invalid or not a plain string (YAML 1.2
+    plain scalars): ': ' or ' #' inside it, or a leading indicator character."""
+    if not value or value[0] in "'\"":
+        return ""
+    if ": " in value or value.endswith(":"):
+        return "has ': ' (YAML reads a second key)"
+    if " #" in value:
+        return "has ' #' (YAML drops the rest as a comment)"
+    if value[0] in "-?:,[]{}#&*!|>%@`":
+        return f"starts with {value[0]!r}"
+    return ""
+
+
 def check_skills() -> None:
     skills = sorted(p for p in (ROOT / "skills").iterdir() if p.is_dir())
     if not skills:
@@ -140,6 +154,9 @@ def check_skills() -> None:
         fm = front_matter(path.read_text(encoding="utf-8"))
         if fm.get("name") != d.name:
             fail(f"{rel}: front matter name must be {d.name!r}, got {fm.get('name')!r}")
+        for key, value in fm.items():
+            if plain_scalar_problem(value):
+                fail(f"{rel}: front matter {key} {plain_scalar_problem(value)}; quote the value or reword it")
         if len(fm.get("description", "")) < 40:
             fail(f"{rel}: front matter needs a description that says when to use the skill")
         check_references(d, path.read_text(encoding="utf-8"))

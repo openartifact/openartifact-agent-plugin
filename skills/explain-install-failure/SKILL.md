@@ -1,6 +1,6 @@
 ---
 name: explain-install-failure
-description: Explain why a package install from OpenArtifact failed (403, 404, "not found", "could not find a version that satisfies", "no matching package") and what to do about it, including who removed or quarantined a version that used to install. Also explains a failed publish or upload (npm publish, twine upload, cargo publish, gem push, mvn deploy, dart pub publish and the like: 401, 403, 405, 409, 413, 422, 507). Use when composer, npm, pip, go, cargo, maven or another package manager fails against an OpenArtifact repository, installing or publishing.
+description: Explain why a package install from OpenArtifact failed (403, 404, "not found", "could not find a version that satisfies", "no matching package") and what to do about it, including who removed or quarantined a version that used to install. Also explains a failed publish or upload (npm publish, twine upload, cargo publish, gem push, mvn deploy, dart pub publish and the like, with 401, 403, 405, 409, 413, 422 or 507). Use when composer, npm, pip, go, cargo, maven or another package manager fails against an OpenArtifact repository, installing or publishing.
 ---
 
 # Explain an install failure from OpenArtifact
